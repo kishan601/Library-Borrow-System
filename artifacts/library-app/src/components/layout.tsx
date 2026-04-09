@@ -8,9 +8,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: stats, isLoading } = useGetBookStats();
 
   return (
-    <div className="min-h-[100dvh] flex flex-col md:flex-row bg-background">
+    <div className="min-h-[100dvh] flex flex-col md:flex-row bg-background overflow-hidden">
       {/* Sidebar Navigation */}
-      <aside className="w-full md:w-64 border-b md:border-r border-border bg-card flex flex-col">
+      <aside className="w-full md:w-64 md:shrink-0 border-b md:border-r border-border bg-card flex flex-col md:h-[100dvh]">
         <div className="p-6 border-b border-border flex items-center gap-3">
           <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center text-primary-foreground shadow-sm">
             <Library className="w-5 h-5" />
@@ -77,7 +77,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto md:h-[100dvh]">
         {children}
       </main>
     </div>
