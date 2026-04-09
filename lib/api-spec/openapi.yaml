@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Library Borrow System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: books
+    description: Book operations
+  - name: borrows
+    description: Borrow operations
 paths:
   /healthz:
     get:
@@ -24,6 +28,139 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /books:
+    get:
+      operationId: listBooks
+      tags: [books]
+      summary: List all books
+      description: Returns all books with available copy count
+      responses:
+        "200":
+          description: List of books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Book"
+
+  /books/{id}:
+    get:
+      operationId: getBook
+      tags: [books]
+      summary: Get book by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Book found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+        "404":
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /borrows:
+    get:
+      operationId: listBorrows
+      tags: [borrows]
+      summary: List all borrows
+      description: Returns all active borrows
+      responses:
+        "200":
+          description: List of borrows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Borrow"
+    post:
+      operationId: borrowBook
+      tags: [borrows]
+      summary: Borrow a book
+      description: Creates a borrow record. Fails if no copies available.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BorrowBookBody"
+      responses:
+        "201":
+          description: Book borrowed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Borrow"
+        "400":
+          description: No copies available or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /borrows/{id}/return:
+    post:
+      operationId: returnBook
+      tags: [borrows]
+      summary: Return a borrowed book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Book returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Borrow"
+        "400":
+          description: Borrow already returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Borrow not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /books/stats/summary:
+    get:
+      operationId: getBookStats
+      tags: [books]
+      summary: Get library stats
+      description: Returns aggregate stats about the library
+      responses:
+        "200":
+          description: Library statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +171,92 @@ components:
       required:
         - status
 
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        author:
+          type: string
+        genre:
+          type: string
+        totalCopies:
+          type: integer
+        availableCopies:
+          type: integer
+        description:
+          type: string
+      required:
+        - id
+        - title
+        - author
+        - genre
+        - totalCopies
+        - availableCopies
+        - description
+
+    Borrow:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        borrowerName:
+          type: string
+        borrowedAt:
+          type: string
+          format: date-time
+        returnedAt:
+          type: string
+          format: date-time
+          nullable: true
+        book:
+          $ref: "#/components/schemas/Book"
+      required:
+        - id
+        - bookId
+        - borrowerName
+        - borrowedAt
+        - returnedAt
+
+    BorrowBookBody:
+      type: object
+      properties:
+        bookId:
+          type: integer
+        borrowerName:
+          type: string
+      required:
+        - bookId
+        - borrowerName
+
+    LibraryStats:
+      type: object
+      properties:
+        totalBooks:
+          type: integer
+        totalCopies:
+          type: integer
+        availableCopies:
+          type: integer
+        borrowedCopies:
+          type: integer
+        activeBorrows:
+          type: integer
+      required:
+        - totalBooks
+        - totalCopies
+        - availableCopies
+        - borrowedCopies
+        - activeBorrows
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
